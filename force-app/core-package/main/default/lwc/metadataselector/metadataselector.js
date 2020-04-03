@@ -5,8 +5,9 @@ import { CurrentPageReference } from 'lightning/navigation';
 export default class Metadataselector extends LightningElement 
 {
     @wire(CurrentPageReference) pageRef;
-    @track selectedMetadata = '';
-    @track name = '';
+    @track selectedMetadataName = '';
+    @track selectedMetadataType = '';
+
     @track referenceMetadataTypes = [];
     @track availableReferenceMetadataTypes = [];
     @track hasMetadata = false;
@@ -18,32 +19,27 @@ export default class Metadataselector extends LightningElement
             options.push({ label: p.name + ' (' + p.count + ')', value: p.name });
         });
         return options;
-        /*return [
-            { label: 'ApexClass', value: 'ApexClass' },
-            { label: 'LightningComponentBundle', value: 'LightningComponentBundle' },
-            { label: 'WebLink', value: 'WebLink' }
-        ];*/
     }
 
     get selectedValues() {
         if(this.referenceMetadataTypes.length > 0) {
             var md = '\'' + this.referenceMetadataTypes.join('\',\'') + '\'';
-            console.log(md);
             return md;
         }
         return '';
+    }
+
+    get selectedMetadataLabel() {
+        return this.selectedMetadataType + ' > ' + this.selectedMetadataName;
     }
 
     handleCheckboxChange(e) {
         this.referenceMetadataTypes = e.detail.value;
     }
 
-    handleChange(event) {
-        this.selectedMetadata = event.target.value;
-    }
-
+    
     handleClick() {
-        fireEvent(this.pageRef, 'metadataChange', { selectedMetadata: this.selectedMetadata, referenceMetadataTypes: this.selectedValues });
+        fireEvent(this.pageRef, 'metadataChange', { selectedMetadataName: this.selectedMetadataName, selectedMetadataType: this.selectedMetadataType, referenceMetadataTypes: this.selectedValues });
     }
 
     disconnectedCallback() {
@@ -56,16 +52,12 @@ export default class Metadataselector extends LightningElement
     }
 
     handleMetadataClick(detail) {
-        console.log('n: ' + detail.name);
-        console.log('p: ' + detail.parent);
-        this.selectedMetadata = detail.parent;
-        this.name = detail.name;
+        this.selectedMetadataName = detail.name;
+        this.selectedMetadataType = detail.type;
         this.hasMetadata = true;
     }
 
     handleMetadataTypes(types) {
-        console.log('t: ' + types);
-        
         this.availableReferenceMetadataTypes = types;
         
         if(!this.hasReferenceMetadata) {
@@ -78,7 +70,8 @@ export default class Metadataselector extends LightningElement
     }
 
     handleRemove() {
-        this.selectedMetadata = '';
+        this.selectedMetadataName = '';
+        this.selectedMetadataType = '';
         this.hasMetadata = false;
         this.handleClick();
     }

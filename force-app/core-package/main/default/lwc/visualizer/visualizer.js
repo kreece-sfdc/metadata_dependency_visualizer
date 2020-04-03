@@ -18,18 +18,18 @@ export default class Visualizer extends LightningElement
     @track types = [];
 
     @track refTypes;
+    @track metadataName;
     @track metadataType;
     d3Initialized = false;
 
     renderedCallback() {
     
         document.addEventListener('customEvent', e => {
-            var name = e.detail.name;
-            var parent = e.detail.parent;
-            this.metadataType = parent;
+            this.metadataType = e.detail.type;
+            this.metadataName = e.detail.name;
             this.fetchResults();
             
-            fireEvent(this.pageRef, 'metadataClick', { name: name, parent: parent });
+            fireEvent(this.pageRef, 'metadataClick', { name: this.metadataName, type: this.metadataType });
         });
 
         document.addEventListener('errorEvent', e => {
@@ -58,7 +58,6 @@ export default class Visualizer extends LightningElement
     }
 
     initializeD3() {
-        console.log('loaded');
     }
 
     disconnectedCallback() {
@@ -70,7 +69,8 @@ export default class Visualizer extends LightningElement
     }
 
     handleMetadataChange(detail) {
-        this.metadataType = detail.selectedMetadata;
+        this.metadataType = detail.selectedMetadataType;
+        this.metadataName = detail.selectedMetadataName;
         this.refTypes = detail.referenceMetadataTypes;
         this.fetchResults();
     }
@@ -80,8 +80,24 @@ export default class Visualizer extends LightningElement
         .then(result => {
             this.results = result;
             let data = JSON.parse(result);
+            console.log(data);
+            // filter here
+            if(this.metadataName != null && this.metadataName.length > 0) {
+                var records = new Array();
+
+                data.records.forEach(p => {
+                    if(p.MetadataComponentName == this.metadataName) {
+                        records.push(p);
+                    }
+                });
+
+                data.records = records;
+            }
+
             var svg = d3.select(this.template.querySelector('svg.d3'));
+
             createsvg(d3, data, svg);
+
             this.returnData(data);
         })
         .catch(error => {
@@ -90,8 +106,6 @@ export default class Visualizer extends LightningElement
     }
 
     returnData(data) {
-        console.log(data);
-        
         if(this.types.length == 0){
             data.records.forEach(element => {
                 if (!this.types.some(p => p.name === element.RefMetadataComponentType)) {

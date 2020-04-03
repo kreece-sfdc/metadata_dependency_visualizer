@@ -84,7 +84,7 @@ const createsvg = (d3, data, svg) =>
                     bubbles: true,
                     detail: {
                         name: d.data.name,
-                        parent: d.parent.data.name
+                        type: d.parent.data.name
                     }
                 })
             );
@@ -167,13 +167,14 @@ function generateMap(data)
 
 function cleanName(name)
 {
-    var index = name.lastIndexOf(".cmp");
+    /*var index = name.lastIndexOf(".cmp");
     if (index > -1)
     {
         name = name.substring(0, index);
-    }
+    }*/
 
-    var replaceFields = ['_', ' ', ':'];
+    var replaceFields = [''];
+    //var replaceFields = ['_', ' ', ':'];
     for (var i = 0; i < replaceFields.length; i++)
     {
         name = name.replace(replaceFields[i], '');

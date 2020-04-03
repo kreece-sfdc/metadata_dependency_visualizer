@@ -1,8 +1,9 @@
 <template>
-    <lightning-card title="Metadata Selector" icon-name="custom:custom14">
+    <lightning-card title="Metadata Configuration" icon-name="standard:settings">
         <div class="slds-m-around_medium">
             <!--<lightning-input label="Metadata Type" value={selectedMetadata} onchange={handleChange}></lightning-input> -->
-            <lightning-button label="Select!" onclick={handleClick}></lightning-button>     
+            <lightning-button label="Fetch Metadata" onclick={handleClick}></lightning-button>     
+            <br /><br />
 
             <template if:true={hasReferenceMetadata}>
                 <lightning-checkbox-group name="Metadata Types"
@@ -15,8 +16,9 @@
 
             <br /><br />
             <template if:true={hasMetadata}>
-                <lightning-pill label={selectedMetadata} onremove={handleRemove}>
-                    <lightning-icon icon-name="standard:account" variant="circle"  alternative-text="account"></lightning-icon>
+                <p style="font-weight: bold;">Filter</p>
+                <lightning-pill label={selectedMetadataLabel} onremove={handleRemove}>
+                    <lightning-icon icon-name="standard:apps" variant="circle"  alternative-text="apps"></lightning-icon>
                 </lightning-pill>
                 <p>{name}</p>
             </template>
