@@ -1,18 +1,16 @@
 public with sharing class ToolingAPIHelper 
 {
-    public static string selectMetadata(string metadata)
+    public static string buildDependencyQuery(string metadata)
     {
-        return selectMetadata(metadata, '');
+        return buildDependencyQuery(metadata, '');
     }
 
-    public static string selectMetadata(string metadata, string referenceMetadataTypes)
+    public static string buildDependencyQuery(string metadata, string referenceMetadataTypes)
     {
         string selectQuery = 'SELECT MetadataComponentId, MetadataComponentName, MetadataComponentType, RefMetadataComponentId, RefMetadataComponentName, RefMetadataComponentType FROM MetadataComponentDependency';
         string whereQuery = ' WHERE ';
         string whereQueryMetadata = 'MetadataComponentType=\'' + metadata + '\'';
         string whereQueryReferenceTypes = 'RefMetadataComponentType IN (' + referenceMetadataTypes + ')';
-
-        //string completeQuery = '';
 
         if(!string.isEmpty(metadata) || !string.isEmpty(referenceMetadataTypes))
         {
@@ -32,17 +30,34 @@ public with sharing class ToolingAPIHelper
             }
         }
 
-        system.debug(selectQuery);
-        return SendAPIRequest(selectQuery);
+        string toolingApiUrl = '/services/data/v48.0/tooling/query?q=';
+        string completeUrl = toolingApiUrl + EncodingUtil.urlEncode(selectQuery, 'UTF-8');
+
+        return SendAPIRequest(completeUrl);
     }
 
-    public static string sendAPIRequest(string query)
+    public static string buildMetadataDetailQuery(string metadataType, string metadataName)
     {
-        string toolingApiUrl = '/services/data/v48.0/tooling/query?q=';
-        string completeUrl = toolingApiUrl + EncodingUtil.urlEncode(query, 'UTF-8');
+        string selectQuery = 'SELECT Id, Name FROM ' + sanitiseInput(metadataType) + ' WHERE Name = \'' + sanitiseInput(metadataName) + '\'';
 
+        string toolingApiUrl = '/services/data/v48.0/tooling/query?q=';
+        string completeUrl = toolingApiUrl + EncodingUtil.urlEncode(selectQuery, 'UTF-8');
+
+        string response = sendAPIRequest(completeUrl);
+        ToolingAPIQueryResponse apiResponse = ToolingAPIQueryResponse.parse(response);
+
+        return sendAPIRequest(apiResponse.records[0].attributes.url);
+    }
+
+    public static string sanitiseInput(string input) 
+    {
+        return input;
+    }
+
+    public static string sendAPIRequest(string url)
+    {
         HttpRequest request = new HttpRequest();
-        request.setEndpoint('callout:MetadataVisualizerNamedCredentials' + completeUrl);
+        request.setEndpoint('callout:MetadataVisualizerNamedCredentials' + url);
         request.setHeader('Content-Type', 'application/json');
         request.setMethod('GET');
 

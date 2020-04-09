@@ -1,17 +1,26 @@
 import { LightningElement, track, wire } from 'lwc';
 import { fireEvent, registerListener, unregisterAllListeners } from 'c/pubsub';
+import retrieveMetadataDetail from '@salesforce/apex/MetadataSelectorController.retrieveMetadataDetail';
 import { CurrentPageReference } from 'lightning/navigation';
+import { GetObjectDetails, iterate } from 'c/edgebundling';
 
 export default class Metadataselector extends LightningElement 
 {
     @wire(CurrentPageReference) pageRef;
-    @track selectedMetadataName = '';
-    @track selectedMetadataType = '';
+    @track filterMetadataName = '';
+    @track filterMetadataType = '';
+
+    @track displayMetadataName = '';
+    @track displayMetadataType = '';
+
+    @track selectedMetadataDetail = [];
 
     @track referenceMetadataTypes = [];
     @track availableReferenceMetadataTypes = [];
     @track hasMetadata = false;
     @track hasReferenceMetadata = false;
+
+    @track isFilterApplied = false;
 
     get metadataTypes() {
         var options = new Array();
@@ -29,8 +38,12 @@ export default class Metadataselector extends LightningElement
         return '';
     }
 
-    get selectedMetadataLabel() {
-        return this.selectedMetadataType + ' > ' + this.selectedMetadataName;
+    get displayMetadataLabel() {
+        return this.displayMetadataType + ' > ' + this.displayMetadataName;
+    }
+
+    get filterMetadataLabel() {
+        return this.filterMetadataType + ' > ' + this.filterMetadataName;
     }
 
     handleCheckboxChange(e) {
@@ -39,7 +52,7 @@ export default class Metadataselector extends LightningElement
 
     
     handleClick() {
-        fireEvent(this.pageRef, 'metadataChange', { selectedMetadataName: this.selectedMetadataName, selectedMetadataType: this.selectedMetadataType, referenceMetadataTypes: this.selectedValues });
+        fireEvent(this.pageRef, 'metadataChange', { selectedMetadataName: this.filterMetadataName, selectedMetadataType: this.filterMetadataType, referenceMetadataTypes: this.selectedValues });
     }
 
     disconnectedCallback() {
@@ -52,9 +65,23 @@ export default class Metadataselector extends LightningElement
     }
 
     handleMetadataClick(detail) {
-        this.selectedMetadataName = detail.name;
-        this.selectedMetadataType = detail.type;
+        this.displayMetadataName = detail.name;
+        this.displayMetadataType = detail.type;
         this.hasMetadata = true;
+        this.retrieveMetadataDetail();
+    }
+
+    retrieveMetadataDetail() {
+        retrieveMetadataDetail({ metadataType: this.displayMetadataType, metadataName: this.displayMetadataName })
+        .then(result => {
+            var parsedJson = JSON.parse(result);
+            var res = GetObjectDetails(parsedJson);
+            //var res = iterate(parsedJson);
+            this.selectedMetadataDetail = res;
+        })
+        .catch(error => {
+            console.log('error: ' + error);
+        });
     }
 
     handleMetadataTypes(types) {
@@ -69,10 +96,17 @@ export default class Metadataselector extends LightningElement
         this.hasReferenceMetadata = true;
     }
 
-    handleRemove() {
-        this.selectedMetadataName = '';
-        this.selectedMetadataType = '';
-        this.hasMetadata = false;
+    handleRemoveFilter() {
+        this.filterMetadataName = '';
+        this.filterMetadataType = '';
+        this.isFilterApplied = false;
         this.handleClick();
+    }
+
+    applyfilter() {
+        this.filterMetadataName = this.displayMetadataName;
+        this.filterMetadataType = this.displayMetadataType;
+        this.handleClick();
+        this.isFilterApplied = true;
     }
 }

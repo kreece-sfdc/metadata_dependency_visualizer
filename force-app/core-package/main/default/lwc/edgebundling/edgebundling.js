@@ -78,7 +78,7 @@ const createsvg = (d3, data, svg) =>
     function clicked(d)
     {
         // filter will only work with incoming connections.
-        if(d.incoming.length > 0) {
+        /*if(d.incoming.length > 0) {*/
             document.dispatchEvent(
                 new CustomEvent('customEvent', {
                     bubbles: true,
@@ -88,7 +88,7 @@ const createsvg = (d3, data, svg) =>
                     }
                 })
             );
-        }
+        /*}
         else {
             document.dispatchEvent(
                 new CustomEvent('errorEvent', {
@@ -98,7 +98,7 @@ const createsvg = (d3, data, svg) =>
                     }
                 })
             );
-        }
+        }*/
     }
 };
 
@@ -295,4 +295,96 @@ function id(node)
     return `${node.parent ? id(node.parent) + "." : ""}${node.data.name}`;
 }
 
-export { createsvg };
+const iterate = (element,) => {
+    var items = new Array();
+
+    Object.keys(element).forEach(function (key)
+    {
+        var val = element[key];
+
+        var item = {};
+        item.expanded = false;
+        item.name = key;
+        item.items = [];
+
+        if(val != null) {
+
+            if(typeof val === 'object') {
+                item.label = String(key);
+                item.items = iterate(val);
+            }
+            else {
+                item.label = String(key + ': ' + val);
+            }
+
+            items.push(item);
+        }
+    });
+
+    return items;
+}
+
+function TidyNodes(input)
+{
+    //node.label += ' (' + node.items.length + ')';
+    for (var i = 0; i < input.length; i++)
+    {
+        var childNode = input[i];
+        childNode.label += ' (' + childNode.items.length + ')';
+        //TidyNodes(childNode);
+        childNode.items.sort((a, b) => a.label.localeCompare(b.label));
+    }
+}
+
+function GetObject(title)
+{
+    var output = {};
+    output.label = title;
+    output.name = title;
+    output.expanded = false;
+    output.items = new Array();
+    return output;
+}
+
+const GetObjectDetails = (node) =>
+{
+    var output = new Array();
+
+
+    var attributeRoot = GetObject('Attributes');
+    var props = Object.keys(node);
+    for (var i = 0; i < props.length; i++)
+    {
+        var prop = props[i];
+        var childObj = GetObject(prop + ':' + node[prop]);
+        attributeRoot.items.push(childObj);
+    }
+    output.push(attributeRoot);
+
+    var methodRoot = GetObject('Methods');
+    var methods = node.SymbolTable.methods;
+    for (var i = 0; i < methods.length; i++)
+    {
+        var method = methods[i];
+        var childObj = GetObject(method.name);
+        methodRoot.items.push(childObj);
+    }
+    output.push(methodRoot);
+
+    var variableRoot = GetObject('Variables');
+    var variables = node.SymbolTable.variables;
+    for (var i = 0; i < methods.length; i++)
+    {
+        var variable = variables[i];
+        var childObj = GetObject(variable.name);
+        variableRoot.items.push(childObj);
+    }
+    output.push(variableRoot);
+
+    TidyNodes(output);
+
+    return output;
+}
+
+
+export { createsvg, iterate, GetObjectDetails };

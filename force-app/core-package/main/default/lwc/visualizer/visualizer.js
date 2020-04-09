@@ -1,5 +1,5 @@
 import { LightningElement, track, wire } from 'lwc';
-import RetrieveDependencies from '@salesforce/apex/MetadataSelectorController.RetrieveDependencies';
+import retrieveDependencies from '@salesforce/apex/MetadataSelectorController.retrieveDependencies';
 import { CurrentPageReference } from 'lightning/navigation';
 import { registerListener, unregisterAllListeners, fireEvent } from 'c/pubsub';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent'
@@ -24,23 +24,6 @@ export default class Visualizer extends LightningElement
 
     renderedCallback() {
     
-        document.addEventListener('customEvent', e => {
-            this.metadataType = e.detail.type;
-            this.metadataName = e.detail.name;
-            this.fetchResults();
-            
-            fireEvent(this.pageRef, 'metadataClick', { name: this.metadataName, type: this.metadataType });
-        });
-
-        document.addEventListener('errorEvent', e => {
-            var message = e.detail.message;
-            const errorToast = new ShowToastEvent({
-                title: 'No Filter Available',
-                message: message
-            });
-            this.dispatchEvent(errorToast);
-        });
-
         if (this.d3Initialized) {
             return;
         }
@@ -66,6 +49,23 @@ export default class Visualizer extends LightningElement
 
     connectedCallback() {
         registerListener('metadataChange', this.handleMetadataChange, this);
+
+        document.addEventListener('customEvent', e => {
+            this.metadataType = e.detail.type;
+            this.metadataName = e.detail.name;
+            //this.fetchResults();
+            fireEvent(this.pageRef, 'metadataClick', { name: this.metadataName, type: this.metadataType });
+        });
+
+        /*document.addEventListener('errorEvent', e => {
+            var message = e.detail.message;
+            const errorToast = new ShowToastEvent({
+                title: 'No Filter Available',
+                message: message
+            });
+            console.log('clicked error');
+            this.dispatchEvent(errorToast);
+        });*/
     }
 
     handleMetadataChange(detail) {
@@ -76,11 +76,10 @@ export default class Visualizer extends LightningElement
     }
 
     fetchResults() {
-        RetrieveDependencies({ selectedMetadata: this.metadataType, referenceMetadataTypes: this.refTypes })
+        retrieveDependencies({ selectedMetadata: this.metadataType, referenceMetadataTypes: this.refTypes })
         .then(result => {
             this.results = result;
             let data = JSON.parse(result);
-            console.log(data);
             // filter here
             if(this.metadataName != null && this.metadataName.length > 0) {
                 var records = new Array();

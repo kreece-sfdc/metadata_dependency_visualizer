@@ -3,6 +3,7 @@
         <div class="slds-m-around_medium">
             <!--<lightning-input label="Metadata Type" value={selectedMetadata} onchange={handleChange}></lightning-input> -->
             <lightning-button label="Fetch Metadata" onclick={handleClick}></lightning-button>     
+            
             <br /><br />
 
             <template if:true={hasReferenceMetadata}>
@@ -12,16 +13,33 @@
                                 value={referenceMetadataTypes}
                                 onchange={handleCheckboxChange}></lightning-checkbox-group>
             </template>
-
-
+            
             <br /><br />
-            <template if:true={hasMetadata}>
+
+            <template if:true={isFilterApplied}>
+                
                 <p style="font-weight: bold;">Filter</p>
-                <lightning-pill label={selectedMetadataLabel} onremove={handleRemove}>
+                <lightning-pill label={filterMetadataLabel} onremove={handleRemoveFilter}>
                     <lightning-icon icon-name="standard:apps" variant="circle"  alternative-text="apps"></lightning-icon>
                 </lightning-pill>
-                <p>{name}</p>
             </template>
+
+            <template if:true={hasMetadata}>
+                <template if:false={isFilterApplied}>
+                    <lightning-button label="Apply as Filter" title="Apply as Filter" icon-name="standard:apps" class="slds-m-left_x-small" onclick={applyfilter}></lightning-button>
+                </template>
+            </template>
+
+            <template if:true={hasMetadata}>
+                <br /><br />
+                <lightning-tile>
+
+                    <lightning-tree items={selectedMetadataDetail} header={displayMetadataLabel}></lightning-tree>
+
+                </lightning-tile>
+            </template>
+                        
+            
         </div>
     </lightning-card>
 </template>
